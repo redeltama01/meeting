@@ -177,10 +177,9 @@
       <div class="row hidden" id="formFromRow"><span style="width:20px"></span><span id="formFrom" class="strike"></span></div>
       <form id="form" novalidate>
         <div id="fields">
-        <div class="name-row">
-          <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="given-name" required maxlength="100"></div>
-          <div class="field"><label for="last" id="lLast"></label><input id="last" autocomplete="family-name" maxlength="100"></div>
-        </div>
+               <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="name" required maxlength="100"></div>
+        <input id="last" type="hidden" value=""><span id="lLast" hidden></span>
+          
         <div class="field"><label for="email" id="lEmail"></label><input id="email" type="email" autocomplete="email" required maxlength="200"></div>
         <input id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         </div>
