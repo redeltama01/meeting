@@ -13,8 +13,10 @@
 <!-- ▲▲▲ ここまで ▲▲▲ -->
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root {
     --blue: #1a73e8; --blue-hover: #1765cc; --blue-bg: #e8f0fe;
@@ -200,7 +202,9 @@
 
 <script>
 (function () {
-  var JA = /^ja/i.test(navigator.language || '');
+  // 表示言語：URL に ?lang=en / ?lang=ja があればそれを優先、無ければブラウザの言語
+  var LANG = (location.search.match(/[?&]lang=([a-zA-Z-]+)/) || [])[1] || '';
+  var JA = LANG ? /^ja/i.test(LANG) : /^ja/i.test(navigator.language || '');
   var T = JA ? {
     pick: '予約枠を選択', pickNew: '新しい日時を選択', today: '今日', dur: function (m) { return m + ' 分の予約'; },
     meet: 'Google Meet ビデオ会議の情報は確定後に追加されます', none: '-', empty: '予約可能な枠がありません',
@@ -269,7 +273,7 @@
     }
   }
 
-  var LOCALE = JA ? 'ja-JP' : (navigator.language || 'en-US');
+  var LOCALE = JA ? 'ja-JP' : (/^ja/i.test(navigator.language || '') || !navigator.language ? 'en-US' : navigator.language);
   var $ = function (id) { return document.getElementById(id); };
   function show(id) { ['pick', 'manage', 'done'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
 
