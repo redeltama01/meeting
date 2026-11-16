@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-<base target="_top">
 <meta charset="utf-8">
+<title>Redelta | Book a meeting</title>
+<!--
+  ▼▼▼ ここだけ書き換えてください ▼▼▼
+  Apps Script の「デプロイ → デプロイを管理」に表示される /exec で終わる URL を、下の '' の中に貼り付けます。
+-->
+<script>
+  window.REDELTA_API_URL = 'https://script.google.com/macros/s/AKfycbyWQSq6pY2tRW31I2jJ5g0Hitjswh_Bi_YlIVXBpLGbl0lPYYQIYA36axuW0px9cXGs/exec';
+</script>
+<!-- ▲▲▲ ここまで ▲▲▲ -->
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
@@ -177,9 +186,8 @@
       <div class="row hidden" id="formFromRow"><span style="width:20px"></span><span id="formFrom" class="strike"></span></div>
       <form id="form" novalidate>
         <div id="fields">
-               <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="name" required maxlength="100"></div>
+        <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="name" required maxlength="100"></div>
         <input id="last" type="hidden" value=""><span id="lLast" hidden></span>
-          
         <div class="field"><label for="email" id="lEmail"></label><input id="email" type="email" autocomplete="email" required maxlength="200"></div>
         <input id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         </div>
@@ -196,7 +204,7 @@
   var T = JA ? {
     pick: '予約枠を選択', pickNew: '新しい日時を選択', today: '今日', dur: function (m) { return m + ' 分の予約'; },
     meet: 'Google Meet ビデオ会議の情報は確定後に追加されます', none: '-', empty: '予約可能な枠がありません',
-    book: '予約', first: '名', last: '姓', email: 'メールアドレス', submit: '予約',
+    book: '予約', first: '名前', last: '', email: 'メールアドレス', submit: '予約',
     sending: '処理中…', done: '予約が確定しました', host: function (n) { return '担当: ' + n; },
     mail: '招待メールを送信しました', manageLink: '予約の変更・キャンセル',
     errName: '名前を入力してください', errEmail: '有効なメールアドレスを入力してください',
@@ -213,7 +221,7 @@
   } : {
     pick: 'Select an appointment time', pickNew: 'Select a new time', today: 'Today', dur: function (m) { return m + ' min appointment'; },
     meet: 'Google Meet video conference info added after booking', none: '-', empty: 'No available times',
-    book: 'Book', first: 'First name', last: 'Last name', email: 'Email address', submit: 'Book',
+    book: 'Book', first: 'Name', last: '', email: 'Email address', submit: 'Book',
     sending: 'Processing…', done: 'You are booked', host: function (n) { return 'Host: ' + n; },
     mail: 'An invitation has been sent to your email', manageLink: 'Reschedule or cancel',
     errName: 'Please enter your name', errEmail: 'Please enter a valid email address',
@@ -229,7 +237,7 @@
     mailUpdate: 'An updated invitation has been sent to your email', mailCancel: 'A cancellation notice has been sent to your email', back: 'Back'
   };
   // ---- サーバー呼び出し：GAS 上なら google.script.run、外部に置いた場合は API_URL へ fetch（ログイン情報は送らない）
-  var API_URL = window.REDELTA_API_URL || 'https://script.google.com/macros/s/AKfycbyWQSq6pY2tRW31I2jJ5g0Hitjswh_Bi_YlIVXBpLGbl0lPYYQIYA36axuW0px9cXGs/exec';
+  var API_URL = window.REDELTA_API_URL || '';
   var IN_GAS = !!(window.google && google.script && google.script.run);
   function call(action, payload) {
     payload = payload || {};
