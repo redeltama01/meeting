@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1a73e8; --blue-hover: #1765cc; --blue-bg: #e8f0fe;
+    --text: #202124; --sub: #5f6368; --line: #dadce0; --bg: #fff; --err: #d93025;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: Roboto, "Noto Sans JP", "Helvetica Neue", Arial, sans-serif; font-size: 14px; }
+  button { font-family: inherit; }
+  .app { display: flex; min-height: 100vh; }
+  .info { width: 320px; flex-shrink: 0; padding: 32px 24px; border-right: 1px solid var(--line); }
+  .host { display: flex; align-items: center; gap: 10px; color: var(--sub); font-weight: 500; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff;
+    display: grid; place-items: center; font-weight: 500; }
+  h1 { font-size: 26px; font-weight: 400; margin: 16px 0 20px; line-height: 1.3; }
+  .row { display: flex; gap: 12px; color: var(--sub); margin: 12px 0; align-items: flex-start; line-height: 20px; }
+  .row svg { flex-shrink: 0; fill: var(--sub); }
+  .desc { white-space: pre-wrap; color: var(--text); margin-top: 20px; line-height: 1.6; }
+  main { flex: 1; padding: 28px 24px; min-width: 0; }
+  h2 { font-size: 22px; font-weight: 400; margin: 0 0 16px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .btn-outline { border: 1px solid var(--line); background: #fff; color: var(--text); border-radius: 4px;
+    height: 36px; padding: 0 16px; font-weight: 500; cursor: pointer; }
+  .btn-outline:hover { background: #f8f9fa; }
+  .icon-btn { width: 36px; height: 36px; border: none; background: none; border-radius: 50%; cursor: pointer;
+    display: grid; place-items: center; }
+  .icon-btn:hover:not(:disabled) { background: #f1f3f4; }
+  .icon-btn:disabled { opacity: .3; cursor: default; }
+  .range { font-size: 18px; margin-left: 4px; }
+  .tz { color: var(--sub); margin: 4px 0 20px; display: flex; align-items: center; gap: 6px; }
+  .tz select { border: none; color: var(--sub); font: inherit; background: transparent; cursor: pointer;
+    flex: 1; min-width: 0; max-width: 520px; padding: 4px 0; }
+  .tz select:hover { color: var(--text); }
+  .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+  .day-head { text-align: center; padding-bottom: 12px; }
+  .dow { font-size: 11px; font-weight: 500; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; }
+  .dnum { font-size: 22px; margin-top: 4px; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; margin-inline: auto; }
+  .today .dnum { background: var(--blue); color: #fff; }
+  .today .dow { color: var(--blue); }
+  .slots { display: flex; flex-direction: column; gap: 8px; }
+  .slot { border: 1px solid var(--line); background: #fff; color: var(--blue); border-radius: 4px;
+    height: 36px; font-weight: 500; cursor: pointer; font-size: 14px; white-space: nowrap; }
+  .slot:hover { background: var(--blue-bg); border-color: var(--blue-bg); }
+  .none { text-align: center; color: var(--sub); padding-top: 4px; }
+  .empty { color: var(--sub); padding: 40px 0; text-align: center; grid-column: 1 / -1; }
+  .loading { display: flex; justify-content: center; padding: 60px 0; grid-column: 1 / -1; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--blue-bg); border-top-color: var(--blue);
+    border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* dialog */
+  .overlay { position: fixed; inset: 0; background: rgba(32,33,36,.5); display: none; align-items: center;
+    justify-content: center; padding: 16px; z-index: 10; }
+  .overlay.open { display: flex; }
+  .dialog { background: #fff; border-radius: 8px; width: 100%; max-width: 480px; max-height: 100%; overflow: auto;
+    box-shadow: 0 4px 8px 3px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.3); }
+  .dialog-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0 24px; }
+  .dialog-head h3 { font-size: 22px; font-weight: 400; margin: 0; }
+  .dialog-body { padding: 8px 24px 24px; }
+  .field { margin-top: 16px; }
+  .field input { width: 100%; height: 52px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px;
+    font: inherit; font-size: 16px; color: var(--text); }
+  .field input:focus { outline: none; border: 2px solid var(--blue); padding: 0 13px; }
+  .field label { display: block; color: var(--sub); font-size: 12px; margin-bottom: 4px; }
+  .name-row { display: flex; gap: 12px; }
+  .name-row .field { flex: 1; }
+  .actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+  .btn-primary { background: var(--blue); color: #fff; border: none; border-radius: 4px; height: 36px;
+    padding: 0 24px; font-weight: 500; cursor: pointer; font-size: 14px; }
+  .btn-primary:hover { background: var(--blue-hover); }
+  .btn-primary:disabled { background: #e8eaed; color: #9aa0a6; cursor: default; }
+  .error { color: var(--err); margin-top: 12px; font-size: 13px; }
+
+  /* done */
+  .done { max-width: 520px; padding-top: 24px; }
+  .done-icon { width: 48px; height: 48px; border-radius: 50%; background: #e6f4ea; display: grid; place-items: center; }
+  .done h2 { margin-top: 16px; }
+  .done .row { color: var(--text); }
+  .done a { color: var(--blue); }
+  .hidden { display: none !important; }
+  .note { color: var(--sub); margin: 16px 0 0; line-height: 1.6; }
+  .manage-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .btn-outline.danger { color: var(--err); }
+  .btn-outline.danger:hover { background: #fce8e6; }
+  .btn-primary.danger { background: var(--err); }
+  .btn-primary.danger:hover { background: #b3261e; }
+  .strike { text-decoration: line-through; color: var(--sub); }
+
+  @media (max-width: 860px) {
+    .app { flex-direction: column; }
+    .info { width: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 20px 16px; }
+    h1 { font-size: 22px; margin: 12px 0; }
+    main { padding: 20px 16px; }
+    .week { grid-template-columns: 1fr; gap: 0; }
+    .daycol { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
+    .day-head { width: 48px; flex-shrink: 0; padding: 0; }
+    .slots { flex: 1; flex-direction: row; flex-wrap: wrap; }
+    .slot { padding: 0 14px; }
+    .none { text-align: left; padding-top: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="info">
+    <div class="host"><div class="avatar" id="avatar">R</div><span id="host"></span></div>
+    <h1 id="title"></h1>
+    <div class="row">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+      <span id="duration"></span>
+    </div>
+    <div class="row">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 16H5V8h10v8z"/></svg>
+      <span id="meetInfo"></span>
+    </div>
+    <div class="desc" id="desc"></div>
+  </aside>
+
+  <main>
+    <section id="manage" class="done hidden">
+      <h2 id="manageTitle"></h2>
+      <div class="row"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg><span id="mWhen"></span></div>
+      <div class="row"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span id="mHost"></span></div>
+      <div class="row" id="mMeetRow"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><a id="mMeet" target="_blank" rel="noopener"></a></div>
+      <div class="note" id="mNote"></div>
+      <div class="manage-actions" id="mActions">
+        <button class="btn-outline" id="mResched"></button>
+        <button class="btn-outline danger" id="mCancel"></button>
+      </div>
+      <div class="error hidden" id="mErr"></div>
+    </section>
+
+    <section id="pick" class="hidden">
+      <h2 id="pickTitle"></h2>
+      <div class="toolbar">
+        <button class="btn-outline" id="todayBtn"></button>
+        <button class="icon-btn" id="prevBtn" aria-label="prev"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#5f6368" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+        <button class="icon-btn" id="nextBtn" aria-label="next"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#5f6368" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></button>
+        <span class="range" id="range"></span>
+      </div>
+      <div class="tz">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#5f6368" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        <select id="tzSel"></select>
+      </div>
+      <div class="week" id="week"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="error hidden" id="pickErr"></div>
+    </section>
+
+    <section id="done" class="done hidden">
+      <div class="done-icon"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="#188038" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <h2 id="doneTitle"></h2>
+      <div class="row"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg><span id="doneWhen"></span></div>
+      <div class="row"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span id="doneHost"></span></div>
+      <div class="row" id="doneMeetRow"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><a id="doneMeet" target="_blank" rel="noopener"></a></div>
+      <div class="row" id="doneMailRow"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg><span id="doneMail"></span></div>
+      <div class="row" id="doneManageRow"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#5f6368" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg><a id="doneManage" target="_top"></a></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h3 id="formTitle"></h3>
+      <button class="icon-btn" id="closeBtn" aria-label="close"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#5f6368" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+    </div>
+    <div class="dialog-body">
+      <div class="row"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg><span id="formWhen" style="color:var(--text)"></span></div>
+      <div class="row hidden" id="formFromRow"><span style="width:20px"></span><span id="formFrom" class="strike"></span></div>
+      <form id="form" novalidate>
+        <div id="fields">
+        <div class="name-row">
+          <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="given-name" required maxlength="100"></div>
+          <div class="field"><label for="last" id="lLast"></label><input id="last" autocomplete="family-name" maxlength="100"></div>
+        </div>
+        <div class="field"><label for="email" id="lEmail"></label><input id="email" type="email" autocomplete="email" required maxlength="200"></div>
+        <input id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        </div>
+        <div class="error hidden" id="formErr"></div>
+        <div class="actions"><button class="btn-primary" type="submit" id="submitBtn"></button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var JA = /^ja/i.test(navigator.language || '');
+  var T = JA ? {
+    pick: '予約枠を選択', pickNew: '新しい日時を選択', today: '今日', dur: function (m) { return m + ' 分の予約'; },
+    meet: 'Google Meet ビデオ会議の情報は確定後に追加されます', none: '-', empty: '予約可能な枠がありません',
+    book: '予約', first: '名', last: '姓', email: 'メールアドレス', submit: '予約',
+    sending: '処理中…', done: '予約が確定しました', host: function (n) { return '担当: ' + n; },
+    mail: '招待メールを送信しました', manageLink: '予約の変更・キャンセル',
+    errName: '名前を入力してください', errEmail: '有効なメールアドレスを入力してください',
+    errTaken: 'この時間は予約できなくなりました。別の時間を選択してください。',
+    errLimit: 'このメールアドレスでは、これ以上予約できません。', errGeneric: 'エラーが発生しました。時間をおいて再度お試しください。',
+    load: '空き状況を読み込めませんでした。ページを再読み込みしてください。',
+    mTitle: '予約の詳細', resched: '日程を変更', cancel: '予約をキャンセル',
+    reschedTitle: '日程を変更', reschedBtn: '変更', cancelTitle: '予約をキャンセルしますか？', cancelBtn: 'キャンセルする',
+    cancelled: 'この予約はキャンセルされています。', past: 'この予約は終了しています。',
+    tooLate: '開始時刻が近いため、ここからは変更・キャンセルできません。招待メールに返信してご連絡ください。',
+    notFound: '予約が見つかりません。リンクをご確認ください。',
+    doneResched: '予約を変更しました', doneCancel: '予約をキャンセルしました', mailUpdate: '更新した招待をメールで送信しました',
+    mailCancel: 'キャンセルの通知をメールで送信しました', back: '戻る'
+  } : {
+    pick: 'Select an appointment time', pickNew: 'Select a new time', today: 'Today', dur: function (m) { return m + ' min appointment'; },
+    meet: 'Google Meet video conference info added after booking', none: '-', empty: 'No available times',
+    book: 'Book', first: 'First name', last: 'Last name', email: 'Email address', submit: 'Book',
+    sending: 'Processing…', done: 'You are booked', host: function (n) { return 'Host: ' + n; },
+    mail: 'An invitation has been sent to your email', manageLink: 'Reschedule or cancel',
+    errName: 'Please enter your name', errEmail: 'Please enter a valid email address',
+    errTaken: 'This time is no longer available. Please choose another time.',
+    errLimit: 'No more bookings can be made with this email address.', errGeneric: 'Something went wrong. Please try again later.',
+    load: 'Could not load availability. Please reload the page.',
+    mTitle: 'Your appointment', resched: 'Reschedule', cancel: 'Cancel appointment',
+    reschedTitle: 'Reschedule', reschedBtn: 'Reschedule', cancelTitle: 'Cancel this appointment?', cancelBtn: 'Cancel appointment',
+    cancelled: 'This appointment has been cancelled.', past: 'This appointment has already ended.',
+    tooLate: 'This appointment is starting soon and can no longer be changed here. Please reply to the invitation email.',
+    notFound: 'Appointment not found. Please check the link.',
+    doneResched: 'Your appointment has been rescheduled', doneCancel: 'Your appointment has been cancelled',
+    mailUpdate: 'An updated invitation has been sent to your email', mailCancel: 'A cancellation notice has been sent to your email', back: 'Back'
+  };
+  // ---- サーバー呼び出し：GAS 上なら google.script.run、外部に置いた場合は API_URL へ fetch（ログイン情報は送らない）
+  var API_URL = window.REDELTA_API_URL || '';
+  var IN_GAS = !!(window.google && google.script && google.script.run);
+  function call(action, payload) {
+    payload = payload || {};
+    return new Promise(function (resolve, reject) {
+      if (IN_GAS) {
+        var r = google.script.run.withSuccessHandler(resolve)
+          .withFailureHandler(function (e) { reject(new Error(String(e && e.message || e))); });
+        if (action === 'availability') r.getAvailability(payload.token || null);
+        else if (action === 'booking') r.getBooking(payload.token);
+        else if (action === 'book') r.book(payload.req);
+        else if (action === 'cancel') r.cancelBooking(payload.token);
+        else if (action === 'reschedule') r.rescheduleBooking(payload.token, payload.start);
+        return;
+      }
+      payload.action = action;
+      fetch(API_URL, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+        .then(function (res) { return res.json(); })
+        .then(function (j) { if (j && j.ok) resolve(j.data); else reject(new Error((j && j.error) || 'ERROR')); })
+        .catch(reject);
+    });
+  }
+  function getParams(cb) {
+    if (window.google && google.script && google.script.url) {
+      google.script.url.getLocation(function (loc) { cb((loc && loc.parameter) || {}); });
+    } else {
+      var q = {};
+      new URLSearchParams(location.search).forEach(function (v, k) { q[k] = v; });
+      cb(q);
+    }
+  }
+
+  var LOCALE = JA ? 'ja-JP' : (navigator.language || 'en-US');
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id) { ['pick', 'manage', 'done'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+
+  var state = { info: null, slots: [], tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Tokyo',
+    start: null, chosen: null, token: '', booking: null, dialog: 'book' };
+
+  // ---- static labels
+  $('todayBtn').textContent = T.today; $('meetInfo').textContent = T.meet;
+  $('lFirst').textContent = T.first; $('lLast').textContent = T.last; $('lEmail').textContent = T.email;
+  $('manageTitle').textContent = T.mTitle; $('mResched').textContent = T.resched; $('mCancel').textContent = T.cancel;
+
+  // ---- date helpers (calendar keys "YYYY-MM-DD" in the selected tz)
+  function keyOf(date, tz) {
+    var p = {};
+    new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(date).forEach(function (x) { p[x.type] = x.value; });
+    return p.year + '-' + p.month + '-' + p.day;
+  }
+  function addDays(key, n) {
+    var p = key.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n));
+    return d.toISOString().slice(0, 10);
+  }
+  function keyDate(key) { var p = key.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2], 12)); }
+  function fmt(date, opts) { opts.timeZone = state.tz; return new Intl.DateTimeFormat(LOCALE, opts).format(date); }
+  function fmtTime(d) { return fmt(d, { hour: 'numeric', minute: '2-digit' }); }
+  function fmtWhen(s, e) {
+    var day = fmt(s, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    return day + ' ' + fmtTime(s) + ' – ' + fmtTime(e);
+  }
+  function tzLabel(tz) {
+    try {
+      var off = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
+        .formatToParts(new Date()).filter(function (x) { return x.type === 'timeZoneName'; })[0].value;
+      var name = new Intl.DateTimeFormat(LOCALE, { timeZone: tz, timeZoneName: 'long' })
+        .formatToParts(new Date()).filter(function (x) { return x.type === 'timeZoneName'; })[0].value;
+      return '(' + off + ') ' + name + ' - ' + tz.replace(/_/g, ' ');
+    } catch (e) { return tz; }
+  }
+  function setInfo(info) {
+    state.info = info;
+    $('host').textContent = info.host; $('avatar').textContent = (info.host || 'R').charAt(0).toUpperCase();
+    $('title').textContent = info.title; $('duration').textContent = T.dur(info.duration);
+    $('desc').textContent = info.description || '';
+    document.title = info.title;
+  }
+
+  // ---- timezone selector
+  function buildTz() {
+    var list = [];
+    try { list = Intl.supportedValuesOf('timeZone'); } catch (e) {}
+    if (!list.length) list = ['Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Singapore', 'Asia/Kolkata', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Australia/Sydney', 'UTC'];
+    if (list.indexOf(state.tz) < 0) list.unshift(state.tz);
+    var sel = $('tzSel');
+    list.forEach(function (tz) {
+      var o = document.createElement('option'); o.value = tz; o.textContent = tzLabel(tz);
+      if (tz === state.tz) o.selected = true; sel.appendChild(o);
+    });
+    sel.addEventListener('change', function () {
+      state.tz = sel.value; state.start = null; render();
+      if (state.booking) renderManage();
+    });
+  }
+
+  // ---- render week
+  function render() {
+    var todayKey = keyOf(new Date(), state.tz);
+    var byDay = {};
+    state.slots.forEach(function (iso) {
+      var d = new Date(iso), k = keyOf(d, state.tz); (byDay[k] = byDay[k] || []).push(d);
+    });
+    var keys = Object.keys(byDay).sort();
+    var lastKey = keys.length ? keys[keys.length - 1] : todayKey;
+    if (!state.start) {
+      state.start = todayKey;
+      if (keys.length && keys[0] > addDays(todayKey, 6)) state.start = keys[0];
+    }
+    var end = addDays(state.start, 6);
+    $('prevBtn').disabled = state.start <= todayKey;
+    $('nextBtn').disabled = end >= lastKey;
+    var a = keyDate(state.start), b = keyDate(end);
+    var sameMonth = state.start.slice(0, 7) === end.slice(0, 7);
+    var o = { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' };
+    $('range').textContent = new Intl.DateTimeFormat(LOCALE, o).format(a) + ' – ' +
+      new Intl.DateTimeFormat(LOCALE, sameMonth ? { timeZone: 'UTC', day: 'numeric' } : o).format(b);
+
+    var week = $('week'); week.innerHTML = '';
+    for (var i = 0; i < 7; i++) {
+      var k = addDays(state.start, i), kd = keyDate(k);
+      var col = document.createElement('div'); col.className = 'daycol';
+      var head = document.createElement('div'); head.className = 'day-head' + (k === todayKey ? ' today' : '');
+      head.innerHTML = '<div class="dow"></div><div class="dnum"></div>';
+      head.firstChild.textContent = new Intl.DateTimeFormat(LOCALE, { timeZone: 'UTC', weekday: 'short' }).format(kd);
+      head.lastChild.textContent = kd.getUTCDate();
+      col.appendChild(head);
+      var box = document.createElement('div'); box.className = 'slots';
+      var list = byDay[k] || [];
+      if (!list.length) { var n = document.createElement('div'); n.className = 'none'; n.textContent = T.none; box.appendChild(n); }
+      list.forEach(function (d) {
+        var btn = document.createElement('button'); btn.className = 'slot'; btn.type = 'button';
+        btn.textContent = fmtTime(d);
+        btn.addEventListener('click', function () { openDialog(state.token ? 'resched' : 'book', d); });
+        box.appendChild(btn);
+      });
+      col.appendChild(box); week.appendChild(col);
+    }
+    if (!state.slots.length) week.innerHTML = '<div class="empty">' + T.empty + '</div>';
+  }
+
+  function shift(n) { state.start = addDays(state.start, n); render(); }
+  $('prevBtn').addEventListener('click', function () { shift(-7); });
+  $('nextBtn').addEventListener('click', function () { shift(7); });
+  $('todayBtn').addEventListener('click', function () { state.start = keyOf(new Date(), state.tz); render(); });
+
+  // ---- dialog (book / resched / cancel)
+  function openDialog(mode, d) {
+    state.dialog = mode; state.chosen = d;
+    var dur = state.info.duration * 60000;
+    $('fields').classList.toggle('hidden', mode !== 'book');
+    $('formFromRow').classList.toggle('hidden', mode !== 'resched');
+    var btn = $('submitBtn'); btn.classList.toggle('danger', mode === 'cancel');
+    if (mode === 'book') { $('formTitle').textContent = T.book; btn.textContent = T.submit; }
+    if (mode === 'resched') {
+      $('formTitle').textContent = T.reschedTitle; btn.textContent = T.reschedBtn;
+      var bs = new Date(state.booking.start), be = new Date(state.booking.end);
+      $('formFrom').textContent = fmtWhen(bs, be);
+    }
+    if (mode === 'cancel') { $('formTitle').textContent = T.cancelTitle; btn.textContent = T.cancelBtn; }
+    $('formWhen').textContent = fmtWhen(d, new Date(d.getTime() + dur));
+    $('formErr').classList.add('hidden');
+    $('overlay').classList.add('open');
+    if (mode === 'book') setTimeout(function () { $('first').focus(); }, 50);
+  }
+  function closeDialog() { $('overlay').classList.remove('open'); }
+  $('closeBtn').addEventListener('click', closeDialog);
+  $('overlay').addEventListener('click', function (e) { if (e.target === $('overlay')) closeDialog(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDialog(); });
+
+  function showErr(id, msg) { var el = $(id); el.textContent = msg; el.classList.remove('hidden'); }
+  function errMsg(m) {
+    if (/SLOT_TAKEN/.test(m)) return T.errTaken;
+    if (/LIMIT/.test(m)) return T.errLimit;
+    if (/INVALID_EMAIL/.test(m)) return T.errEmail;
+    if (/INVALID_NAME/.test(m)) return T.errName;
+    if (/TOO_LATE/.test(m)) return T.tooLate;
+    if (/NOT_FOUND/.test(m)) return T.notFound;
+    return T.errGeneric;
+  }
+
+  function showDone(kind, r) {
+    $('doneTitle').textContent = kind === 'book' ? T.done : kind === 'resched' ? T.doneResched : T.doneCancel;
+    $('doneWhen').textContent = fmtWhen(new Date(r.start), new Date(r.end));
+    $('doneWhen').classList.toggle('strike', kind === 'cancel');
+    $('doneHost').textContent = T.host(r.hostName);
+    var hasMeet = kind !== 'cancel' && r.meetLink;
+    $('doneMeetRow').classList.toggle('hidden', !hasMeet);
+    if (hasMeet) { $('doneMeet').href = r.meetLink; $('doneMeet').textContent = r.meetLink.replace(/^https?:\/\//, ''); }
+    $('doneMail').textContent = kind === 'book' ? T.mail : kind === 'resched' ? T.mailUpdate : T.mailCancel;
+    var hasManage = kind !== 'cancel' && r.manageUrl;
+    $('doneManageRow').classList.toggle('hidden', !hasManage);
+    if (hasManage) { $('doneManage').href = r.manageUrl; $('doneManage').textContent = T.manageLink; }
+    show('done');
+  }
+
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var mode = state.dialog, btn = $('submitBtn'), label = btn.textContent;
+    var first = $('first').value.trim(), last = $('last').value.trim(), email = $('email').value.trim();
+    if (mode === 'book') {
+      if (!first) return showErr('formErr', T.errName);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('formErr', T.errEmail);
+    }
+    btn.disabled = true; btn.textContent = T.sending;
+    var req;
+    if (mode === 'book') req = call('book', { req: { start: state.chosen.toISOString(), firstName: first, lastName: last, email: email, website: $('website').value } });
+    else if (mode === 'resched') req = call('reschedule', { token: state.token, start: state.chosen.toISOString() });
+    else req = call('cancel', { token: state.token });
+    req.then(function (r) {
+      btn.disabled = false; btn.textContent = label; closeDialog();
+      if (mode === 'cancel') r = { start: state.booking.start, end: state.booking.end, hostName: state.booking.hostName };
+      showDone(mode, r);
+    }, function (err) {
+      btn.disabled = false; btn.textContent = label;
+      var m = String(err && err.message || err);
+      if (/SLOT_TAKEN/.test(m)) { closeDialog(); showErr('pickErr', T.errTaken); loadSlots(); }
+      else showErr('formErr', errMsg(m));
+    });
+  });
+
+  // ---- manage (reschedule / cancel)
+  function renderManage() {
+    var b = state.booking;
+    $('mWhen').textContent = fmtWhen(new Date(b.start), new Date(b.end));
+    $('mWhen').classList.toggle('strike', b.status === 'cancelled');
+    $('mHost').textContent = T.host(b.hostName);
+    var hasMeet = b.status === 'active' && b.meetLink;
+    $('mMeetRow').classList.toggle('hidden', !hasMeet);
+    if (hasMeet) { $('mMeet').href = b.meetLink; $('mMeet').textContent = b.meetLink.replace(/^https?:\/\//, ''); }
+    var note = b.status === 'cancelled' ? T.cancelled : b.status === 'past' ? T.past : (!b.changeable ? T.tooLate : '');
+    $('mNote').textContent = note;
+    $('mActions').classList.toggle('hidden', !b.changeable);
+  }
+  $('mResched').addEventListener('click', function () {
+    $('pickTitle').textContent = T.pickNew; show('pick'); loadSlots();
+  });
+  $('mCancel').addEventListener('click', function () { openDialog('cancel', new Date(state.booking.start)); });
+
+  function loadManage() {
+    show('manage');
+    call('booking', { token: state.token }).then(function (b) {
+      state.booking = b;
+      setInfo({ title: b.title, host: b.host, description: b.description, duration: b.duration });
+      renderManage();
+    }, function (err) {
+      $('mActions').classList.add('hidden');
+      showErr('mErr', errMsg(String(err && err.message || err)));
+    });
+  }
+
+  // ---- load slots
+  function loadSlots() {
+    $('week').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    call('availability', { token: state.token || null }).then(function (info) {
+      setInfo(info); state.slots = info.slots; render();
+    }, function () {
+      $('week').innerHTML = ''; showErr('pickErr', T.load);
+    });
+  }
+
+  buildTz();
+  getParams(function (params) {
+    var t = params.booking;
+    if (t) { state.token = String(t); loadManage(); }
+    else { $('pickTitle').textContent = T.pick; show('pick'); loadSlots(); }
+  });
+})();
+</script>
+</body>
+</html>
