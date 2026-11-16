@@ -230,7 +230,7 @@
     mailUpdate: 'An updated invitation has been sent to your email', mailCancel: 'A cancellation notice has been sent to your email', back: 'Back'
   };
   // ---- サーバー呼び出し：GAS 上なら google.script.run、外部に置いた場合は API_URL へ fetch（ログイン情報は送らない）
-  var API_URL = window.REDELTA_API_URL || '';
+  var API_URL = window.REDELTA_API_URL || 'https://script.google.com/macros/s/AKfycbyWQSq6pY2tRW31I2jJ5g0Hitjswh_Bi_YlIVXBpLGbl0lPYYQIYA36axuW0px9cXGs/exec';
   var IN_GAS = !!(window.google && google.script && google.script.run);
   function call(action, payload) {
     payload = payload || {};
