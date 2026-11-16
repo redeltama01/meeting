@@ -191,7 +191,6 @@
         <div class="field"><label for="first" id="lFirst"></label><input id="first" autocomplete="name" required maxlength="100"></div>
         <input id="last" type="hidden" value=""><span id="lLast" hidden></span>
         <div class="field"><label for="email" id="lEmail"></label><input id="email" type="email" autocomplete="email" required maxlength="200"></div>
-        <input id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         </div>
         <div class="error hidden" id="formErr"></div>
         <div class="actions"><button class="btn-primary" type="submit" id="submitBtn"></button></div>
@@ -419,7 +418,7 @@
     if (/INVALID_NAME/.test(m)) return T.errName;
     if (/TOO_LATE/.test(m)) return T.tooLate;
     if (/NOT_FOUND/.test(m)) return T.notFound;
-    return T.errGeneric;
+    return T.errGeneric + '（' + String(m).slice(0, 120) + '）';
   }
 
   function showDone(kind, r) {
@@ -447,7 +446,7 @@
     }
     btn.disabled = true; btn.textContent = T.sending;
     var req;
-    if (mode === 'book') req = call('book', { req: { start: state.chosen.toISOString(), firstName: first, lastName: last, email: email, website: $('website').value } });
+    if (mode === 'book') req = call('book', { req: { start: state.chosen.toISOString(), firstName: first, lastName: last, email: email } });
     else if (mode === 'resched') req = call('reschedule', { token: state.token, start: state.chosen.toISOString() });
     else req = call('cancel', { token: state.token });
     req.then(function (r) {
